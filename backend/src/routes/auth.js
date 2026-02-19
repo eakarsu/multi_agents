@@ -52,7 +52,7 @@ router.post('/login', authLimiter, loginValidation, (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  db.prepare('UPDATE users SET last_login = datetime("now") WHERE id = ?').run(user.id);
+  db.prepare('UPDATE users SET last_login = datetime(''now'') WHERE id = ?').run(user.id);
   const token = generateToken(user);
 
   res.json({
@@ -103,7 +103,7 @@ router.post('/reset-password', authLimiter, (req, res) => {
   }
 
   const passwordHash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE users SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = datetime(''now'') WHERE id = ?')
     .run(passwordHash, user.id);
 
   res.json({ message: 'Password has been reset successfully' });
@@ -119,7 +119,7 @@ router.post('/change-password', authenticateToken, changePasswordValidation, (re
   }
 
   const passwordHash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash = ?, updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE users SET password_hash = ?, updated_at = datetime(''now'') WHERE id = ?')
     .run(passwordHash, req.user.id);
 
   res.json({ message: 'Password changed successfully' });
@@ -132,7 +132,7 @@ router.get('/verify-email/:token', (req, res) => {
 
   if (!user) return res.status(400).json({ error: 'Invalid verification token' });
 
-  db.prepare('UPDATE users SET is_email_verified = 1, email_verification_token = NULL, updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE users SET is_email_verified = 1, email_verification_token = NULL, updated_at = datetime(''now'') WHERE id = ?')
     .run(user.id);
 
   res.json({ message: 'Email verified successfully' });
@@ -152,7 +152,7 @@ router.get('/me', authenticateToken, (req, res) => {
 router.put('/profile', authenticateToken, (req, res) => {
   const { firstName, lastName, phone, department, avatar } = req.body;
 
-  db.prepare('UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), phone = COALESCE(?, phone), department = COALESCE(?, department), avatar = COALESCE(?, avatar), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), phone = COALESCE(?, phone), department = COALESCE(?, department), avatar = COALESCE(?, avatar), updated_at = datetime(''now'') WHERE id = ?')
     .run(firstName, lastName, phone, department, avatar, req.user.id);
 
   const user = db.prepare('SELECT id, email, first_name, last_name, role, avatar, phone, department FROM users WHERE id = ?').get(req.user.id);
