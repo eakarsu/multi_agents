@@ -8,10 +8,12 @@ function sanitize(value) {
   return value;
 }
 
+const SKIP_SANITIZE = ['password', 'currentPassword', 'newPassword', 'confirmPassword', 'password_hash'];
+
 function sanitizeBody(req, res, next) {
   if (req.body && typeof req.body === 'object') {
     for (const key of Object.keys(req.body)) {
-      if (typeof req.body[key] === 'string') {
+      if (typeof req.body[key] === 'string' && !SKIP_SANITIZE.includes(key)) {
         req.body[key] = sanitize(req.body[key]);
       }
     }
