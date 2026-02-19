@@ -66,7 +66,7 @@ export default function Login() {
         </form>
 
         <Typography variant="body2" align="center" color="text.secondary">
-          Don't have an account? <Typography component={Link} to="/register" variant="body2" sx={{ color: 'primary.main', textDecoration: 'none', fontWeight: 600 }}>Sign up</Typography>
+          Don&apos;t have an account? <Typography component={Link} to="/register" variant="body2" sx={{ color: 'primary.main', textDecoration: 'none', fontWeight: 600 }}>Sign up</Typography>
         </Typography>
 
         <Alert severity="info" sx={{ mt: 3, fontSize: '0.75rem' }}>
