@@ -74,7 +74,7 @@ router.put('/users/:id', authenticateToken, requireMinRole('admin'), sanitizeBod
   const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'User not found' });
 
-  db.prepare('UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), role = COALESCE(?, role), phone = COALESCE(?, phone), department = COALESCE(?, department), status = COALESCE(?, status), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), role = COALESCE(?, role), phone = COALESCE(?, phone), department = COALESCE(?, department), status = COALESCE(?, status), updated_at = datetime('now') WHERE id = ?')
     .run(firstName, lastName, role, phone, department, status, req.params.id);
 
   const user = db.prepare('SELECT id, email, first_name, last_name, role, phone, department, status, updated_at FROM users WHERE id = ?').get(req.params.id);
@@ -115,7 +115,7 @@ router.post('/users/bulk-update', authenticateToken, requireRole('admin'), sanit
   }
   if (setClauses.length === 0) return res.status(400).json({ error: 'No valid updates provided' });
 
-  setClauses.push('updated_at = datetime("now")');
+  setClauses.push('updated_at = datetime('now')');
   const placeholders = ids.map(() => '?').join(',');
   db.prepare(`UPDATE users SET ${setClauses.join(', ')} WHERE id IN (${placeholders})`).run(...setValues, ...ids);
   res.json({ message: `${ids.length} users updated` });
@@ -153,7 +153,7 @@ router.put('/agents/:id', authenticateToken, requireMinRole('user'), sanitizeBod
   const existing = db.prepare('SELECT id FROM agents WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Agent not found' });
 
-  db.prepare('UPDATE agents SET name = COALESCE(?, name), type = COALESCE(?, type), category = COALESCE(?, category), description = COALESCE(?, description), status = COALESCE(?, status), provider = COALESCE(?, provider), model = COALESCE(?, model), system_prompt = COALESCE(?, system_prompt), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE agents SET name = COALESCE(?, name), type = COALESCE(?, type), category = COALESCE(?, category), description = COALESCE(?, description), status = COALESCE(?, status), provider = COALESCE(?, provider), model = COALESCE(?, model), system_prompt = COALESCE(?, system_prompt), updated_at = datetime('now') WHERE id = ?')
     .run(name, type, category, description, status, provider, model, systemPrompt, req.params.id);
 
   const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(req.params.id);
@@ -184,7 +184,7 @@ router.post('/agents/bulk-update', authenticateToken, requireMinRole('manager'),
     if (allowedUpdates.includes(key)) { setClauses.push(`${key} = ?`); setValues.push(value); }
   }
   if (setClauses.length === 0) return res.status(400).json({ error: 'No valid updates' });
-  setClauses.push('updated_at = datetime("now")');
+  setClauses.push('updated_at = datetime('now')');
   const placeholders = ids.map(() => '?').join(',');
   db.prepare(`UPDATE agents SET ${setClauses.join(', ')} WHERE id IN (${placeholders})`).run(...setValues, ...ids);
   res.json({ message: `${ids.length} agents updated` });
@@ -221,7 +221,7 @@ router.put('/tasks/:id', authenticateToken, sanitizeBody, (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Task not found' });
 
   const completedAt = status === 'completed' ? new Date().toISOString() : null;
-  db.prepare('UPDATE tasks SET title = COALESCE(?, title), description = COALESCE(?, description), agent_id = COALESCE(?, agent_id), assigned_to = COALESCE(?, assigned_to), status = COALESCE(?, status), priority = COALESCE(?, priority), due_date = COALESCE(?, due_date), tags = COALESCE(?, tags), completed_at = COALESCE(?, completed_at), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE tasks SET title = COALESCE(?, title), description = COALESCE(?, description), agent_id = COALESCE(?, agent_id), assigned_to = COALESCE(?, assigned_to), status = COALESCE(?, status), priority = COALESCE(?, priority), due_date = COALESCE(?, due_date), tags = COALESCE(?, tags), completed_at = COALESCE(?, completed_at), updated_at = datetime('now') WHERE id = ?')
     .run(title, description, agentId, assignedTo, status, priority, dueDate, tags ? JSON.stringify(tags) : null, completedAt, req.params.id);
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
   res.json(task);
@@ -251,7 +251,7 @@ router.post('/tasks/bulk-update', authenticateToken, sanitizeBody, (req, res) =>
     if (allowedUpdates.includes(key)) { setClauses.push(`${key} = ?`); setValues.push(value); }
   }
   if (setClauses.length === 0) return res.status(400).json({ error: 'No valid updates' });
-  setClauses.push('updated_at = datetime("now")');
+  setClauses.push('updated_at = datetime('now')');
   const placeholders = ids.map(() => '?').join(',');
   db.prepare(`UPDATE tasks SET ${setClauses.join(', ')} WHERE id IN (${placeholders})`).run(...setValues, ...ids);
   res.json({ message: `${ids.length} tasks updated` });
@@ -286,7 +286,7 @@ router.put('/templates/:id', authenticateToken, sanitizeBody, (req, res) => {
   const { name, description, category, agentType, systemPrompt, sampleTasks, isPublic } = req.body;
   const existing = db.prepare('SELECT id FROM templates WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Template not found' });
-  db.prepare('UPDATE templates SET name = COALESCE(?, name), description = COALESCE(?, description), category = COALESCE(?, category), agent_type = COALESCE(?, agent_type), system_prompt = COALESCE(?, system_prompt), sample_tasks = COALESCE(?, sample_tasks), is_public = COALESCE(?, is_public), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE templates SET name = COALESCE(?, name), description = COALESCE(?, description), category = COALESCE(?, category), agent_type = COALESCE(?, agent_type), system_prompt = COALESCE(?, system_prompt), sample_tasks = COALESCE(?, sample_tasks), is_public = COALESCE(?, is_public), updated_at = datetime('now') WHERE id = ?')
     .run(name, description, category, agentType, systemPrompt, sampleTasks ? JSON.stringify(sampleTasks) : null, isPublic !== undefined ? (isPublic ? 1 : 0) : null, req.params.id);
   const template = db.prepare('SELECT * FROM templates WHERE id = ?').get(req.params.id);
   res.json(template);
@@ -335,7 +335,7 @@ router.put('/conversations/:id', authenticateToken, sanitizeBody, (req, res) => 
   const { title, status, satisfaction, lastMessage, messageCount } = req.body;
   const existing = db.prepare('SELECT id FROM conversations WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Conversation not found' });
-  db.prepare('UPDATE conversations SET title = COALESCE(?, title), status = COALESCE(?, status), satisfaction = COALESCE(?, satisfaction), last_message = COALESCE(?, last_message), message_count = COALESCE(?, message_count), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE conversations SET title = COALESCE(?, title), status = COALESCE(?, status), satisfaction = COALESCE(?, satisfaction), last_message = COALESCE(?, last_message), message_count = COALESCE(?, message_count), updated_at = datetime('now') WHERE id = ?')
     .run(title, status, satisfaction, lastMessage, messageCount, req.params.id);
   const conv = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
   res.json(conv);
@@ -384,7 +384,7 @@ router.put('/reports/:id', authenticateToken, sanitizeBody, (req, res) => {
   const { title, description, type, status, data } = req.body;
   const existing = db.prepare('SELECT id FROM reports WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Report not found' });
-  db.prepare('UPDATE reports SET title = COALESCE(?, title), description = COALESCE(?, description), type = COALESCE(?, type), status = COALESCE(?, status), data = COALESCE(?, data), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE reports SET title = COALESCE(?, title), description = COALESCE(?, description), type = COALESCE(?, type), status = COALESCE(?, status), data = COALESCE(?, data), updated_at = datetime('now') WHERE id = ?')
     .run(title, description, type, status, data ? JSON.stringify(data) : null, req.params.id);
   const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(req.params.id);
   res.json(report);
@@ -433,7 +433,7 @@ router.put('/integrations/:id', authenticateToken, requireMinRole('manager'), sa
   const { name, type, provider, status, config } = req.body;
   const existing = db.prepare('SELECT id FROM integrations WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Integration not found' });
-  db.prepare('UPDATE integrations SET name = COALESCE(?, name), type = COALESCE(?, type), provider = COALESCE(?, provider), status = COALESCE(?, status), config = COALESCE(?, config), updated_at = datetime("now") WHERE id = ?')
+  db.prepare('UPDATE integrations SET name = COALESCE(?, name), type = COALESCE(?, type), provider = COALESCE(?, provider), status = COALESCE(?, status), config = COALESCE(?, config), updated_at = datetime('now') WHERE id = ?')
     .run(name, type, provider, status, config ? JSON.stringify(config) : null, req.params.id);
   const integration = db.prepare('SELECT * FROM integrations WHERE id = ?').get(req.params.id);
   res.json(integration);
