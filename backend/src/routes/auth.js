@@ -52,7 +52,7 @@ router.post('/login', authLimiter, loginValidation, (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  db.prepare('UPDATE users SET last_login = datetime(''now'') WHERE id = ?').run(user.id);
+  db.prepare(`UPDATE users SET last_login = datetime('now') WHERE id = ?`).run(user.id);
   const token = generateToken(user);
 
   res.json({
@@ -64,7 +64,7 @@ router.post('/login', authLimiter, loginValidation, (req, res) => {
   });
 });
 
-// Logout (client-side token removal, server-side we just acknowledge)
+// Logout
 router.post('/logout', authenticateToken, (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
@@ -80,9 +80,9 @@ router.post('/forgot-password', authLimiter, (req, res) => {
   }
 
   const resetToken = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 3600000).toISOString(); // 1 hour
+  const expires = new Date(Date.now() + 3600000).toISOString();
 
-  db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?')
+  db.prepare(`UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?`)
     .run(resetToken, expires, user.id);
 
   res.json({ message: 'If an account exists with that email, a reset link has been sent.', resetToken });
@@ -92,7 +92,6 @@ router.post('/forgot-password', authLimiter, (req, res) => {
 router.post('/reset-password', authLimiter, (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password are required' });
-
   if (newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
 
   const user = db.prepare('SELECT id, password_reset_expires FROM users WHERE password_reset_token = ?').get(token);
@@ -103,7 +102,7 @@ router.post('/reset-password', authLimiter, (req, res) => {
   }
 
   const passwordHash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = datetime(''now'') WHERE id = ?')
+  db.prepare(`UPDATE users SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = datetime('now') WHERE id = ?`)
     .run(passwordHash, user.id);
 
   res.json({ message: 'Password has been reset successfully' });
@@ -119,7 +118,7 @@ router.post('/change-password', authenticateToken, changePasswordValidation, (re
   }
 
   const passwordHash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash = ?, updated_at = datetime(''now'') WHERE id = ?')
+  db.prepare(`UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`)
     .run(passwordHash, req.user.id);
 
   res.json({ message: 'Password changed successfully' });
@@ -132,7 +131,7 @@ router.get('/verify-email/:token', (req, res) => {
 
   if (!user) return res.status(400).json({ error: 'Invalid verification token' });
 
-  db.prepare('UPDATE users SET is_email_verified = 1, email_verification_token = NULL, updated_at = datetime(''now'') WHERE id = ?')
+  db.prepare(`UPDATE users SET is_email_verified = 1, email_verification_token = NULL, updated_at = datetime('now') WHERE id = ?`)
     .run(user.id);
 
   res.json({ message: 'Email verified successfully' });
@@ -152,7 +151,7 @@ router.get('/me', authenticateToken, (req, res) => {
 router.put('/profile', authenticateToken, (req, res) => {
   const { firstName, lastName, phone, department, avatar } = req.body;
 
-  db.prepare('UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), phone = COALESCE(?, phone), department = COALESCE(?, department), avatar = COALESCE(?, avatar), updated_at = datetime(''now'') WHERE id = ?')
+  db.prepare(`UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), phone = COALESCE(?, phone), department = COALESCE(?, department), avatar = COALESCE(?, avatar), updated_at = datetime('now') WHERE id = ?`)
     .run(firstName, lastName, phone, department, avatar, req.user.id);
 
   const user = db.prepare('SELECT id, email, first_name, last_name, role, avatar, phone, department FROM users WHERE id = ?').get(req.user.id);
