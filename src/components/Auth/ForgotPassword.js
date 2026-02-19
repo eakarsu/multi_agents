@@ -30,7 +30,7 @@ export default function ForgotPassword() {
       <Paper sx={{ p: 4, width: '100%', maxWidth: 440 }}>
         <Typography variant="h5" align="center" sx={{ mb: 1, fontWeight: 700 }}>Reset Password</Typography>
         <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-          Enter your email and we'll send you a reset link
+          Enter your email and we&apos;ll send you a reset link
         </Typography>
 
         {sent ? (
