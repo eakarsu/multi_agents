@@ -40,6 +40,7 @@ import ConversationsPage from './components/Pages/ConversationsPage';
 import ReportsPage from './components/Pages/ReportsPage';
 import IntegrationsPage from './components/Pages/IntegrationsPage';
 import NotificationsPage from './components/Pages/NotificationsPage';
+import DebatePage from './components/Pages/DebatePage';
 
 function LandingPage() {
   return (
