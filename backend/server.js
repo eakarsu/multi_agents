@@ -29,6 +29,7 @@ const PORT = process.env.BACKEND_PORT || process.env.PORT || 8000;
 
 // Initialize agent service
 const agentService = new AgentService();
+const debateService = new DebateService();
 
 // Seed database
 seed();
