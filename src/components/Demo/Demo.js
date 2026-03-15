@@ -70,6 +70,8 @@ const Demo = () => {
       case 3:
         return <DataAnalysisDemo />;
       case 4:
+        return <DebateDemo />;
+      case 5:
         return <AgentTemplateExplorer />;
       default:
         return <CustomerSupportDemo />;
