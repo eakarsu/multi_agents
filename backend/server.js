@@ -192,6 +192,74 @@ app.get('/api/agents/providers', async (req, res) => {
   }
 });
 
+// ==========================================
+// DEBATE ENDPOINTS
+// ==========================================
+
+// Get debate presets (debaters and topics)
+app.get('/api/debate/presets', (req, res) => {
+  res.json({
+    debaters: DebateService.DEBATER_PRESETS,
+    topics: DebateService.TOPIC_PRESETS
+  });
+});
+
+// Run a single debate turn
+app.post('/api/debate/turn', async (req, res) => {
+  try {
+    const { debaterKey, topic, previousArguments = [], roundNumber = 1, totalRounds = 2, provider } = req.body;
+    if (!debaterKey || !topic) {
+      return res.status(400).json({ error: 'debaterKey and topic are required' });
+    }
+    const content = await debateService.runDebaterTurn(
+      debaterKey, topic, previousArguments, roundNumber, totalRounds, provider
+    );
+    const preset = DebateService.DEBATER_PRESETS[debaterKey];
+    res.json({
+      debaterKey,
+      debaterName: preset.name,
+      avatar: preset.avatar,
+      color: preset.color,
+      round: roundNumber,
+      content,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Debate Turn Error:', error);
+    res.status(500).json({ error: 'Failed to process debate turn', message: error.message });
+  }
+});
+
+// Generate moderator summary
+app.post('/api/debate/summary', async (req, res) => {
+  try {
+    const { topic, arguments: allArguments, provider } = req.body;
+    if (!topic || !allArguments) {
+      return res.status(400).json({ error: 'topic and arguments are required' });
+    }
+    const summary = await debateService.generateModeratorSummary(topic, allArguments, provider);
+    res.json({ summary });
+  } catch (error) {
+    console.error('Debate Summary Error:', error);
+    res.status(500).json({ error: 'Failed to generate debate summary', message: error.message });
+  }
+});
+
+// Run a complete debate (all rounds)
+app.post('/api/debate/full', async (req, res) => {
+  try {
+    const { topic, debaters, rounds = 2, provider } = req.body;
+    if (!topic || !debaters || !Array.isArray(debaters) || debaters.length < 2) {
+      return res.status(400).json({ error: 'topic and at least 2 debaters are required' });
+    }
+    const result = await debateService.runFullDebate(topic, debaters, rounds, provider);
+    res.json(result);
+  } catch (error) {
+    console.error('Full Debate Error:', error);
+    res.status(500).json({ error: 'Failed to run full debate', message: error.message });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err);
