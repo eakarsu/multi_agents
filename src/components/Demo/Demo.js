@@ -14,6 +14,7 @@ import ContentCreationDemo from './ContentCreationDemo';
 import LeadQualificationDemo from './LeadQualificationDemo';
 import DataAnalysisDemo from './DataAnalysisDemo';
 import AgentTemplateExplorer from './AgentTemplateExplorer';
+import DebateDemo from './DebateDemo';
 
 const MotionTypography = motion(Typography);
 const MotionBox = motion(Box);
@@ -23,6 +24,7 @@ const tabLabels = [
   'Content Creation',
   'Lead Qualification',
   'Data Analysis',
+  'AI Debate',
   'Agent Templates'
 ];
 
