@@ -10,6 +10,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Import agent services
 const AgentService = require('./src/services/AgentService');
+const DebateService = require('./src/services/DebateService');
 
 // Import database and seed
 const db = require('./src/db/database');
