@@ -689,7 +689,7 @@ const DebateDemo = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <GavelIcon sx={{ color: 'warning.dark' }} />
               <Typography variant="h6" sx={{ fontWeight: 600, color: 'warning.dark' }}>
-                Moderator's Summary
+                Moderator&apos;s Summary
               </Typography>
             </Box>
             <Typography
