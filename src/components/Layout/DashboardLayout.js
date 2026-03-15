@@ -22,6 +22,7 @@ const navItems = [
   { label: 'Templates', icon: Description, path: '/templates' },
   { label: 'Conversations', icon: Chat, path: '/conversations' },
   { label: 'Reports', icon: Assessment, path: '/reports' },
+  { label: 'AI Debate', icon: Forum, path: '/debate' },
   { label: 'Integrations', icon: Extension, path: '/integrations' },
   { label: 'Notifications', icon: NotifIcon, path: '/notifications' },
 ];
