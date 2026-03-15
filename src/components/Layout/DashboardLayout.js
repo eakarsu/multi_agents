@@ -8,7 +8,7 @@ import {
 import {
   Menu as MenuIcon, Dashboard, People, SmartToy, Assignment, Description,
   Chat, Assessment, Extension, Notifications as NotifIcon, Person,
-  Lock, Logout, ChevronLeft, Home
+  Lock, Logout, ChevronLeft, Home, Forum
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
