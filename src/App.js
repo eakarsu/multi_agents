@@ -93,6 +93,7 @@ function AppRoutes() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="debate" element={<DebatePage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="change-password" element={<ChangePassword />} />
       </Route>
