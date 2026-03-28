@@ -2,8 +2,6 @@
 > craftagent-pro-backend@1.0.0 start
 > node server.js
 
-🚀 CraftAgent Pro Backend running on http://localhost:8000
-📊 Health check: http://localhost:8000/health
-🤖 Anthropic API proxy: http://localhost:8000/api/anthropic/messages
-💬 Customer Support: http://localhost:8000/api/agents/customer-support
-✍️  Content Creation: http://localhost:8000/api/agents/content-creation
+Database already seeded, skipping...
+CraftAgent Pro Backend running on http://localhost:8000
+Health check: http://localhost:8000/health
