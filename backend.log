@@ -1,7 +1,0 @@
-
-> craftagent-pro-backend@1.0.0 start
-> node server.js
-
-Database already seeded, skipping...
-CraftAgent Pro Backend running on http://localhost:8000
-Health check: http://localhost:8000/health
