@@ -41,6 +41,7 @@ import ReportsPage from './components/Pages/ReportsPage';
 import IntegrationsPage from './components/Pages/IntegrationsPage';
 import NotificationsPage from './components/Pages/NotificationsPage';
 import DebatePage from './components/Pages/DebatePage';
+import AgentTasksPage from './components/Pages/AgentTasksPage';
 
 function LandingPage() {
   return (
@@ -94,6 +95,7 @@ function AppRoutes() {
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="debate" element={<DebatePage />} />
+        <Route path="agent-tasks" element={<AgentTasksPage />} />
         <Route path="profile" element={<Profile />} />
         <Route path="change-password" element={<ChangePassword />} />
       </Route>

@@ -61,6 +61,7 @@ app.use('/api/auth', authRoutes);
 
 // CRUD routes
 app.use('/api', crudRoutes);
+app.use('/api/agent-lifecycle', require('./src/routes/agentLifecycle')); app.use('/api/debate-vote', require('./src/routes/debateVote')); app.use('/api/cost-guardrails', require('./src/routes/costGuardrails')); app.use('/api/flow-editor', require('./src/routes/flowEditor')); app.use('/api/traces', require('./src/routes/traces')); app.use('/api/tool-registry', require('./src/routes/toolRegistry'));
 
 // Anthropic API proxy endpoint
 app.post('/api/anthropic/messages', async (req, res) => {
@@ -258,6 +259,241 @@ app.post('/api/debate/full', async (req, res) => {
     console.error('Full Debate Error:', error);
     res.status(500).json({ error: 'Failed to run full debate', message: error.message });
   }
+});
+
+// ==========================================
+// MULTI-AGENT ORCHESTRATION ENDPOINTS
+// ==========================================
+
+// Helper: confirm at least one provider has a key
+function _hasAnyProviderKey() {
+  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
+}
+
+// Run multiple agents in parallel against the same task and aggregate
+// POST /api/agents/parallel
+// body: { agents: [{ agentType, agentName, customPrompt?, provider? }, ...], task, context?, aggregator?: "concat"|"vote"|"summary" }
+app.post('/api/agents/parallel', async (req, res) => {
+  try {
+    if (!_hasAnyProviderKey()) {
+      return res.status(503).json({ error: 'AI provider not configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in .env to enable this endpoint.' });
+    }
+    const { agents, task, context, aggregator } = req.body || {};
+    if (!Array.isArray(agents) || agents.length === 0) {
+      return res.status(400).json({ error: 'agents (non-empty array) is required' });
+    }
+    if (!task) return res.status(400).json({ error: 'task is required' });
+
+    const startedAt = new Date().toISOString();
+    const settled = await Promise.allSettled(
+      agents.map((a) =>
+        agentService.genericAgent(
+          a.agentType || 'generic',
+          a.agentName || `agent-${Math.random().toString(36).slice(2, 6)}`,
+          task,
+          a.customPrompt,
+          context || {},
+          a.provider
+        )
+      )
+    );
+
+    const results = settled.map((s, i) => ({
+      agent: agents[i],
+      status: s.status === 'fulfilled' ? 'ok' : 'error',
+      output: s.status === 'fulfilled' ? s.value : null,
+      error: s.status === 'rejected' ? s.reason?.message || String(s.reason) : null,
+    }));
+
+    let aggregated = null;
+    const mode = aggregator || 'concat';
+    const okOutputs = results.filter((r) => r.status === 'ok').map((r) => r.output);
+    if (mode === 'concat') {
+      aggregated = okOutputs.join('\n\n---\n\n');
+    } else if (mode === 'vote') {
+      const counts = {};
+      okOutputs.forEach((o) => { counts[o] = (counts[o] || 0) + 1; });
+      aggregated = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    } else if (mode === 'summary') {
+      try {
+        aggregated = await agentService.genericAgent(
+          'analyst',
+          'aggregator',
+          `Combine the following ${okOutputs.length} agent responses to the task ("${task}") into a single concise consensus summary that highlights agreements and disagreements:\n\n${okOutputs.map((o, i) => `[Agent ${i + 1}]\n${o}`).join('\n\n')}`,
+          null,
+          {},
+          undefined
+        );
+      } catch (e) {
+        aggregated = okOutputs.join('\n\n---\n\n');
+      }
+    } else {
+      aggregated = okOutputs.join('\n\n---\n\n');
+    }
+
+    res.json({
+      task,
+      aggregator: mode,
+      startedAt,
+      completedAt: new Date().toISOString(),
+      results,
+      aggregated,
+      successCount: okOutputs.length,
+      failureCount: results.length - okOutputs.length,
+    });
+  } catch (error) {
+    console.error('Agent parallel orchestration error:', error);
+    res.status(500).json({ error: 'Failed to run parallel agents', message: error.message });
+  }
+});
+
+// Run a multi-step agent chain (each step's output is fed into the next)
+// POST /api/agents/chain
+// body: { steps: [{ agentType, agentName, prompt, provider? }, ...], initialInput?, context? }
+app.post('/api/agents/chain', async (req, res) => {
+  try {
+    if (!_hasAnyProviderKey()) {
+      return res.status(503).json({ error: 'AI provider not configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in .env to enable this endpoint.' });
+    }
+    const { steps, initialInput, context } = req.body || {};
+    if (!Array.isArray(steps) || steps.length === 0) {
+      return res.status(400).json({ error: 'steps (non-empty array) is required' });
+    }
+
+    const startedAt = new Date().toISOString();
+    const trace = [];
+    let currentInput = initialInput || '';
+
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i];
+      if (!s.prompt) {
+        trace.push({ step: i + 1, status: 'error', error: 'step.prompt is required' });
+        return res.status(400).json({ error: `step ${i + 1} missing prompt`, trace });
+      }
+      const composed = `${s.prompt}\n\nUpstream input:\n${currentInput || '(none)'}`;
+      try {
+        const output = await agentService.genericAgent(
+          s.agentType || 'generic',
+          s.agentName || `step-${i + 1}`,
+          composed,
+          s.customPrompt || null,
+          context || {},
+          s.provider
+        );
+        trace.push({
+          step: i + 1,
+          agentType: s.agentType || 'generic',
+          agentName: s.agentName || `step-${i + 1}`,
+          status: 'ok',
+          input: currentInput,
+          output,
+        });
+        currentInput = output;
+      } catch (err) {
+        trace.push({ step: i + 1, status: 'error', error: err.message });
+        return res.status(500).json({ error: `step ${i + 1} failed: ${err.message}`, trace });
+      }
+    }
+
+    res.json({
+      startedAt,
+      completedAt: new Date().toISOString(),
+      finalOutput: currentInput,
+      stepCount: steps.length,
+      trace,
+    });
+  } catch (error) {
+    console.error('Agent chain orchestration error:', error);
+    res.status(500).json({ error: 'Failed to run agent chain', message: error.message });
+  }
+});
+
+// In-memory task store for agent dispatch (per-process)
+const _agentTasks = new Map();
+let _taskIdCounter = 1;
+
+// Dispatch a task to a generic agent (asynchronous fire-and-forget with status polling)
+app.post('/api/agents/tasks', async (req, res) => {
+  try {
+    const { agentType, agentName, task, customPrompt, context, provider } = req.body;
+    if (!agentType || !agentName || !task) {
+      return res.status(400).json({ error: 'agentType, agentName, and task are required' });
+    }
+    const id = String(_taskIdCounter++);
+    const record = {
+      id,
+      status: 'queued',
+      agentType,
+      agentName,
+      task,
+      provider: provider || agentService.defaultProvider,
+      createdAt: new Date().toISOString(),
+      result: null,
+      error: null
+    };
+    _agentTasks.set(id, record);
+
+    // Run async; don't block the response
+    (async () => {
+      try {
+        record.status = 'running';
+        record.startedAt = new Date().toISOString();
+        const response = await agentService.genericAgent(
+          agentType,
+          agentName,
+          task,
+          customPrompt,
+          context || {},
+          provider
+        );
+        record.status = 'done';
+        record.result = response;
+        record.completedAt = new Date().toISOString();
+      } catch (err) {
+        record.status = 'failed';
+        record.error = err.message;
+        record.completedAt = new Date().toISOString();
+      }
+    })();
+
+    res.status(202).json({ taskId: id, status: record.status });
+  } catch (error) {
+    console.error('Agent task dispatch error:', error);
+    res.status(500).json({ error: 'Failed to dispatch agent task', message: error.message });
+  }
+});
+
+// Get status of a previously dispatched task
+app.get('/api/agents/tasks/:id', (req, res) => {
+  const record = _agentTasks.get(req.params.id);
+  if (!record) return res.status(404).json({ error: 'Task not found' });
+  res.json(record);
+});
+
+// List recent tasks (last 50)
+app.get('/api/agents/tasks', (req, res) => {
+  const tasks = Array.from(_agentTasks.values()).slice(-50).reverse();
+  res.json({ tasks });
+});
+
+// Aggregate agent monitoring snapshot
+app.get('/api/agents/monitor', (req, res) => {
+  const tasks = Array.from(_agentTasks.values());
+  const byStatus = tasks.reduce((acc, t) => {
+    acc[t.status] = (acc[t.status] || 0) + 1;
+    return acc;
+  }, {});
+  const byAgent = tasks.reduce((acc, t) => {
+    const k = `${t.agentType}:${t.agentName}`;
+    acc[k] = (acc[k] || 0) + 1;
+    return acc;
+  }, {});
+  res.json({
+    totalTasks: tasks.length,
+    byStatus,
+    byAgent,
+    providers: agentService.getAvailableProviders ? agentService.getAvailableProviders() : []
+  });
 });
 
 // Error handling middleware

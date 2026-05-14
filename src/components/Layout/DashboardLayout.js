@@ -8,7 +8,7 @@ import {
 import {
   Menu as MenuIcon, Dashboard, People, SmartToy, Assignment, Description,
   Chat, Assessment, Extension, Notifications as NotifIcon, Person,
-  Lock, Logout, ChevronLeft, Home, Forum
+  Lock, Logout, ChevronLeft, Home, Forum, PlayCircleFilled
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -23,6 +23,7 @@ const navItems = [
   { label: 'Conversations', icon: Chat, path: '/conversations' },
   { label: 'Reports', icon: Assessment, path: '/reports' },
   { label: 'AI Debate', icon: Forum, path: '/debate' },
+  { label: 'Agent Tasks', icon: PlayCircleFilled, path: '/agent-tasks' },
   { label: 'Integrations', icon: Extension, path: '/integrations' },
   { label: 'Notifications', icon: NotifIcon, path: '/notifications' },
 ];
